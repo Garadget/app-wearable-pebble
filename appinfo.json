@@ -1,0 +1,75 @@
+{
+    "appKeys": {
+        "command": 0,
+        "device": 1,
+        "device0": 2,
+        "device1": 3,
+        "device2": 4,
+        "device3": 5,
+        "device4": 6,
+        "device5": 7,
+        "device6": 8,
+        "device7": 9,
+        "device8": 10,
+        "device9": 11
+    },
+    "capabilities": [
+        "configurable"
+    ],
+    "companyName": "Peter Summers",
+    "longName": "Garadget Controller",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/query 28x18.png",
+                "name": "IMAGE_QUERY",
+                "type": "png"
+            },
+            {
+                "file": "images/Large_Garage_Query.png",
+                "name": "IMAGE_LARGE_GARAGE_QUERY",
+                "type": "png"
+            },
+            {
+                "file": "images/Large_Garage_HalfOpen.png",
+                "name": "IMAGE_LARGE_GARAGE_HALFOPEN",
+                "type": "png"
+            },
+            {
+                "file": "images/Large_Garage_Closed.png",
+                "name": "IMAGE_LARGE_GARAGE_CLOSED",
+                "type": "png"
+            },
+            {
+                "file": "images/Large_Garage_Open.png",
+                "name": "IMAGE_LARGE_GARAGE_OPEN",
+                "type": "png"
+            },
+            {
+                "file": "images/Garage_Closed.png",
+                "menuIcon": true,
+                "name": "IMAGE_GARAGE_CLOSED",
+                "type": "png"
+            },
+            {
+                "file": "images/Small_Garage_Closed.png",
+                "name": "IMAGE_SMALL_GARAGE_CLOSED",
+                "type": "png"
+            },
+            {
+                "file": "images/Small_Garage_Open.png",
+                "name": "IMAGE_SMALL_GARAGE_OPEN",
+                "type": "png"
+            }
+        ]
+    },
+    "sdkVersion": "2",
+    "shortName": "Garadget Controller",
+    "uuid": "e8f30fec-083b-46d8-816f-9ba11db3bf13",
+    "versionCode": 1,
+    "versionLabel": "0.1",
+    "watchapp": {
+        "watchface": false
+    }
+}
