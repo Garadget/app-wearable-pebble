@@ -130,7 +130,7 @@ function updateDoorStatus() {
     var signal = result[3].split("=");
     msg = {"command" : "status", "device0": status[1], "device1": time[1], "device2": sensor[1], "device3": signal[1]};
   } catch(err) {
-    msg = {"command" : "status", "device0": "no response", "device1": "", "device2": "", "device3": ""};
+    msg = {"command" : "status", "device0": "???", "device1": "", "device2": "", "device3": ""};
   }
   console.log(JSON.stringify(msg));
   sendMessage(msg);
