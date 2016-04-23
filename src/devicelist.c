@@ -22,8 +22,8 @@ static Window *window;
 static Window *device_window;
 static MenuLayer *menu_layer;
 static BitmapLayer *logo_layer, *garage_image_layer;
-static TextLayer *message_layer, *device_layer, *status_layer, *signal_strength_layer;
-static char device_text[32], status_text[32], signal_strength_text[8];
+static TextLayer *message_layer, *device_layer, *status_layer, *signal_strength_layer, *time_layer;
+static char device_text[32], status_text[32], signal_strength_text[8], time_text[8];
 
 void devicelist_init() {
 	window = window_create();
@@ -91,15 +91,17 @@ void devicelist_in_received_handler(DictionaryIterator *iter) {
       bitmap_layer_set_bitmap(garage_image_layer, garage_closed);
     else
       bitmap_layer_set_bitmap(garage_image_layer, garage_halfopen);
-//     Tuple *time_tuple = dict_find(iter, DEVICES_KEY+1);
+    Tuple *time_tuple = dict_find(iter, DEVICES_KEY+1);
+    Tuple *signal_tuple = dict_find(iter, DEVICES_KEY+3);
     snprintf(device_text, sizeof(device_text), "%s", devices[device_num]);
     snprintf(status_text, sizeof(status_text), "%s", status_tuple->value->cstring);
-    text_layer_set_text(device_layer, device_text);
-    text_layer_set_text(status_layer, status_text);
-    APP_LOG(APP_LOG_LEVEL_DEBUG,"%s door is %s.", devices[device_num], status_tuple->value->cstring);
-    Tuple *signal_tuple = dict_find(iter, DEVICES_KEY+3);
+    snprintf(time_text, sizeof(time_text), "%s", time_tuple->value->cstring);
     snprintf(signal_strength_text, sizeof(signal_strength_text), "%sdB", signal_tuple->value->cstring);
     text_layer_set_text(signal_strength_layer, signal_strength_text);
+    text_layer_set_text(device_layer, device_text);
+    text_layer_set_text(status_layer, status_text);
+    text_layer_set_text(time_layer, time_text);
+    APP_LOG(APP_LOG_LEVEL_DEBUG,"%s door is %s.", devices[device_num], status_tuple->value->cstring);
    } else /* this is a list of devices */ {
     num_devices = 0;
     for (int deviceNumber=0; deviceNumber < MAX_DEVICES; deviceNumber++) {
@@ -236,7 +238,13 @@ static void device_window_load(Window *window) {
   text_layer_set_text(status_layer, devices[device_num]);
   layer_add_child(device_window_layer, text_layer_get_layer(status_layer));
 
-  signal_strength_layer = text_layer_create(GRect(80, 0, 40, 20));
+  time_layer = text_layer_create(GRect(4, 0, 54, 20));
+  text_layer_set_background_color(time_layer, GColorClear);
+  text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  text_layer_set_text_alignment(time_layer, GTextAlignmentLeft);
+  layer_add_child(device_window_layer, text_layer_get_layer(time_layer));
+
+  signal_strength_layer = text_layer_create(GRect(70, 0, 50, 20));
   text_layer_set_background_color(signal_strength_layer, GColorClear);
   text_layer_set_font(signal_strength_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_text_alignment(signal_strength_layer, GTextAlignmentRight);
@@ -265,6 +273,7 @@ static void device_window_unload(Window *window) {
   gbitmap_destroy(garage_halfopen);
   gbitmap_destroy(garage_query);
   text_layer_destroy(signal_strength_layer);
+  text_layer_destroy(time_layer);
   text_layer_destroy(status_layer);
   text_layer_destroy(device_layer);
   window_stack_pop_all(true);
