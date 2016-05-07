@@ -5,11 +5,11 @@
 
 static void init(void) {
 	appmessage_init();
-	devicelist_init();
+	device_window_init();
 }
 
 static void deinit(void) {
-	devicelist_destroy();
+ 	device_window_destroy();
 }
 
 int main(void) {
