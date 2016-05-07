@@ -68,7 +68,7 @@
     "shortName": "Garadget Controller",
     "uuid": "e8f30fec-083b-46d8-816f-9ba11db3bf13",
     "versionCode": 1,
-    "versionLabel": "0.1",
+    "versionLabel": "0.6",
     "watchapp": {
         "watchface": false
     }
