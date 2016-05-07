@@ -4,7 +4,7 @@
 #include "common.h"
 #define MAX_DEVICES 10
 
-static int device_num;
+static int device_num = 0;
 static int num_devices;
 static char devices[MAX_DEVICES][20];
 static char* action;
@@ -18,50 +18,10 @@ static void device_window_unload(Window *window);
 void action_bar_click_config_provider(void *context);
 void window_click_config_provider(void *context);
 
-static Window *window;
 static Window *device_window;
-static MenuLayer *menu_layer;
-static BitmapLayer *logo_layer, *garage_image_layer;
-static TextLayer *message_layer, *device_layer, *status_layer, *signal_strength_layer, *time_layer;
+static BitmapLayer *garage_image_layer;
+static TextLayer *device_layer, *status_layer, *signal_strength_layer, *time_layer;
 static char device_text[32], status_text[32], signal_strength_text[8], time_text[8];
-
-void devicelist_init() {
-	window = window_create();
-
-//   window_set_window_handlers(window, (WindowHandlers) {
-// 		.load = window_load,
-//     .unload = window_unload,
-// 	});
-  
-  Layer *window_layer = window_get_root_layer(window);
-  GRect bounds = layer_get_bounds(window_layer);
-
-  logo_layer = bitmap_layer_create(GRect(0, 0, bounds.size.w, bounds.size.h));
-  logo = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_LARGE_GARAGE_CLOSED);
-  bitmap_layer_set_bitmap(logo_layer, logo);
-  layer_add_child(window_layer, bitmap_layer_get_layer(logo_layer));
-
-  message_layer = text_layer_create(GRect(0, 120, 144, 30));
-  text_layer_set_background_color(message_layer, GColorClear);
-  text_layer_set_font(message_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
-  text_layer_set_text_alignment(message_layer, GTextAlignmentCenter);
-  layer_add_child(window_layer, text_layer_get_layer(message_layer));
-  text_layer_set_text(message_layer, "Loading...");
-  
-#ifndef PBL_SDK_3
-  window_set_fullscreen(window,true);
-#endif
-
-  window_stack_push(window, true);
-}
-
-void devicelist_destroy(void) {
-  APP_LOG(APP_LOG_LEVEL_DEBUG,"Destroying window.");
-  gbitmap_destroy(logo);
-  bitmap_layer_destroy(logo_layer);
-  text_layer_destroy(message_layer);
-	window_destroy_safe(window);
-}
 
 void device_window_init() {
 	device_window = window_create();
@@ -69,21 +29,20 @@ void device_window_init() {
 		.load = device_window_load,
     .unload = device_window_unload,
 	});
-  
   window_stack_push(device_window, true);
-  action = "query";
-  request_action();
 }
 
-static void choose_action() {
-  device_window_init();
+void device_window_destroy() {
+  window_stack_pop_all(true);
+  window_destroy(device_window);
 }
 
 void devicelist_in_received_handler(DictionaryIterator *iter) {
   Tuple *command_tuple = dict_find(iter, COMMAND_KEY);
-  if (strcmp(command_tuple->value->cstring, "no config") == 0) 
-    text_layer_set_text(message_layer, "Please configure");
-  else if (strcmp(command_tuple->value->cstring, "status") == 0) /* this is a status update */ {
+  if (strcmp(command_tuple->value->cstring, "no config") == 0) {
+    text_layer_set_text(device_layer, "Please");
+    text_layer_set_text(status_layer, "configure.");
+  } else if (strcmp(command_tuple->value->cstring, "status") == 0) /* this is a status update */ {
     Tuple *status_tuple = dict_find(iter, DEVICES_KEY);
     if (strcmp(status_tuple->value->cstring, "open") == 0)
       bitmap_layer_set_bitmap(garage_image_layer, garage_open);
@@ -114,11 +73,14 @@ void devicelist_in_received_handler(DictionaryIterator *iter) {
       }
     }
     APP_LOG(APP_LOG_LEVEL_DEBUG,"Got %d devices.", num_devices);
-    if (num_devices == 0) 
-      text_layer_set_text(message_layer, "no doors");
-    else {
+    if (num_devices == 0) {
+      text_layer_set_text(device_layer, "No doors");
+      text_layer_set_text(status_layer, "found.");
+    } else {
+      text_layer_set_text(device_layer, devices[device_num]);
+      action = "query";
       device_num = 0;
-      choose_action();
+      request_action();
     }
   }
 }
@@ -146,7 +108,6 @@ static void my_long_up_click_handler(ClickRecognizerRef recognizer, void *contex
   device_num = (device_num + 1) % num_devices;
   text_layer_set_text(device_layer, devices[device_num]);
   vibes_short_pulse();
-  window_stack_push(device_window, true);
   action = "query";
   request_action();
 }
@@ -162,7 +123,6 @@ static void my_long_down_click_handler(ClickRecognizerRef recognizer, void *cont
   device_num = (device_num + num_devices- 1) % num_devices;
   text_layer_set_text(device_layer, devices[device_num]);
   vibes_short_pulse();
-  window_stack_push(device_window, true);
   action = "query";
   request_action();
 }
@@ -179,7 +139,7 @@ void action_bar_click_config_provider(void *context) {
 
 static void request_action() {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "Requesting action %d %s:", device_num, action);
-  bitmap_layer_set_bitmap(garage_image_layer, garage_query);
+//   bitmap_layer_set_bitmap(garage_image_layer, garage_query);
   text_layer_set_text(status_layer, "...");
   Tuplet request_tuple = TupletCString(COMMAND_KEY, action);
 	Tuplet device_tuple = TupletInteger(DEVICE_KEY, device_num);
@@ -190,12 +150,6 @@ static void request_action() {
 	dict_write_tuplet(iter, &device_tuple);
 	dict_write_end(iter);
 	app_message_outbox_send();
-}
-
-static void window_load(Window *window) {
-}
-
-static void window_unload(Window *window) {
 }
 
 static void device_window_load(Window *window) {
@@ -228,14 +182,14 @@ static void device_window_load(Window *window) {
   text_layer_set_background_color(device_layer, GColorClear);
   text_layer_set_font(device_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
   text_layer_set_text_alignment(device_layer, GTextAlignmentCenter);
-  text_layer_set_text(device_layer, devices[device_num]);
+  text_layer_set_text(device_layer, "Initializing");
   layer_add_child(device_window_layer, text_layer_get_layer(device_layer));
 
   status_layer = text_layer_create(GRect(0, bounds.size.h-36, 124, 32));
   text_layer_set_background_color(status_layer, GColorClear);
   text_layer_set_font(status_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
   text_layer_set_text_alignment(status_layer, GTextAlignmentCenter);
-  text_layer_set_text(status_layer, devices[device_num]);
+  text_layer_set_text(status_layer, "...");
   layer_add_child(device_window_layer, text_layer_get_layer(status_layer));
 
   time_layer = text_layer_create(GRect(4, 0, 54, 20));
@@ -276,5 +230,4 @@ static void device_window_unload(Window *window) {
   text_layer_destroy(time_layer);
   text_layer_destroy(status_layer);
   text_layer_destroy(device_layer);
-  window_stack_pop_all(true);
 }
